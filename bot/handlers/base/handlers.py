@@ -61,7 +61,10 @@ async def _process_datepicker(callback_query: types.CallbackQuery, callback_data
 
 async def info_presentation(message: types.Message, state: FSMContext, **kwargs):
     data = await state.get_data()
-    memory = await Dispatcher.get_current().storage.get_data()
+
+    user_id = message.from_user.id
+    dispatcher = Dispatcher.get_current()
+    memory = await dispatcher.storage.get_data(user=user_id)
 
     parser_dto = ParserDto(departure_place=data.get("departure_place"), arrival_place=data.get("arrival_place"),
                            date=data.get("date"), interval=memory.get("interval", 300))
