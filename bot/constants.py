@@ -17,6 +17,7 @@ class ConfigureButtons(EnumWithGet):
 
 
 class ConfigureInterval(EnumWithGet):
+    PER_0_MINUTES = "Каждые 0 минуты"
     PER_3_MINUTES = "Каждые 3 минуты"
     PER_5_MINUTES = "Каждые 5 минуты"
     PER_10_MINUTES = "Каждые 10 минуты"

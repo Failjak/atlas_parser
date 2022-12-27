@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
@@ -14,17 +16,25 @@ from parser.settings import parser_settings
 
 
 async def cmd_start(message: types.Message, state: FSMContext):
-    await state.finish()
-
     chat_id = message.chat.id
     dispatcher = Dispatcher.get_current()
-    await dispatcher.storage.set_data(chat=chat_id, data={"interval": 2})
+
+    data = await dispatcher.storage.get_data(chat=chat_id)
+    if data.get("interval") is None:
+        await state.finish()
+        await dispatcher.storage.set_data(chat=chat_id, data={"interval": DEFAULT_INTERVAL})
 
     markup = get_markup()
     await message.answer("Atlas Schedule Menu:", reply_markup=markup)
 
 
-async def start_trip_choosing(message: types.Message, state: FSMContext):
+async def cmd_stop(message: types.Message):
+    chat_id = message.chat.id
+    dispatcher = Dispatcher.get_current()
+    await dispatcher.storage.set_data(chat=chat_id, data={"run": False})
+
+
+async def start_trip_choosing(message: types.Message):
     await ChooseTripState.place_of_departure.set()
     await message.answer("Место отправления:")
 
@@ -53,8 +63,8 @@ async def _process_datepicker(callback_query: types.CallbackQuery, callback_data
         await callback_query.message.answer(date)
         await state.update_data(date=date)
         await info_presentation(message=callback_query.message, state=state)
-
-    await callback_query.answer()
+    else:
+        await callback_query.answer()
 
 
 async def info_presentation(message: types.Message, state: FSMContext, **kwargs):
@@ -62,13 +72,19 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
     dispatcher = Dispatcher.get_current()
     memory = await dispatcher.storage.get_data(chat=chat_id)
 
-    parser_dto = ParserDto(departure_place=memory.get("departure_place"), arrival_place=memory.get("arrival_place"),
-                           date=memory.get("date"), interval=memory.get("interval", DEFAULT_INTERVAL))
+    parser_dto = ParserDto(
+        departure_place=memory.get("departure_place"),
+        arrival_place=memory.get("arrival_place"),
+        date=memory.get("date"),
+        interval=memory.get("interval", DEFAULT_INTERVAL)
+    )
 
     route = generate_final_route(parser_dto)
     await message.answer(f"Конечный маршрут: {route}")
 
-    async for info in run_parser(settings=parser_settings, params=parser_dto):
-        if info: await message.answer(info)
+    while memory.get("run", True):
+        await run_parser(parser_settings, parser_dto)
+        await asyncio.sleep(parser_dto.interval * 60)
+        memory = await dispatcher.storage.get_data(chat=chat_id)
 
     await state.finish()

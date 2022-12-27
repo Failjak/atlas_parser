@@ -1,10 +1,8 @@
 from aiogram import Dispatcher
-from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
 
-from bot.constants import ConfigureButtons
 from bot.handlers.base.handlers import cmd_start, start_trip_choosing, set_arrival_place, set_departure_place, \
-    _process_datepicker
+    _process_datepicker, cmd_stop
 from bot.handlers.base.states import ChooseTripState
 from bot.handlers.configure.handlers import configurations, _process_configurations
 from bot.handlers.configure.states import ConfigureState
@@ -14,6 +12,9 @@ from bot.handlers.keyboard import BaseCommands
 def registration_handlers(dp: Dispatcher):
     dp.register_message_handler(
         callback=cmd_start, commands=['start'], state='*'
+    )
+    dp.register_message_handler(
+        callback=cmd_stop, commands=['stop'], state='*'
     )
 
     dp.register_message_handler(
