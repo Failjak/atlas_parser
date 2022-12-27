@@ -31,8 +31,8 @@ async def _process_configurations(callback_query: types.CallbackQuery, state: FS
                                             reply_markup=markup_generator(**data))
 
     elif new_interval := ConfigureInterval.get(cq_data):
-        interval = new_interval.name.split("_")[1]
-        await dispatcher.storage.update_data(chat=chat_id, data={"interval": interval})
+        interval = int(new_interval.name.split("_")[1])
+        await dispatcher.storage.set_data(chat=chat_id, data={"interval": interval})
 
         markup = callback_query.message.reply_markup
         try:
