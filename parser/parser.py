@@ -37,7 +37,10 @@ def find_non_empty_seats(trips: ResultSet):
     seats = []
 
     for trip in trips:
-        seats_text = trip.div.div.find("button").text
+        try:
+            seats_text = trip.div.div.find("button").text
+        except AttributeError:  # if there is an additional frame
+            seats_text = trip.div.div.find_next_sibling("div").find("button").text
         if seats_text != 'Нет мест':
             seats.append(trip.div.div.div)
 
@@ -99,11 +102,6 @@ async def parse(url, **kwargs):
 
 
 async def run_parser(settings: ParserSettings, params: ParserDto, **kwargs):
-    url = settings.url.format(params.departure_place, params.arrival_place, params.date)
-
-    try:
-        while True:
-            yield await parse(url, only_if_exist=True)
-            await asyncio.sleep(params.interval * 60)
-    except KeyboardInterrupt:
-        logger.info("Stop Atlas Parser")
+    url = settings.url.format(params.departure_place.capitalize(), params.arrival_place.capitalize(), params.date)
+    # logger.debug(url)
+    await parse(url, only_if_exist=True)
