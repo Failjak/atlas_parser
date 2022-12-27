@@ -3,10 +3,13 @@ from typing import List
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
+from bot.constants import ConfigureButtons, ConfigureInterval
+
 
 class BaseCommands(Enum):
-    CHOOSE_TRIP = 'Choose trip'
-    STOP_LOOKING = 'Stop looking'
+    CHOOSE_TRIP = "Choose trip"
+    STOP_LOOKING = "Stop looking"
+    CONFIGURATION = "Configurate"
 
 
 def get_keyboard(commands: type(Enum)) -> List[KeyboardButton]:
@@ -31,11 +34,24 @@ def get_markup() -> ReplyKeyboardMarkup:
     return markup
 
 
-def generate_inline_markup(workplaces: dict) -> InlineKeyboardMarkup:
+def generate_inline_markup(inlines: type(Enum)) -> InlineKeyboardMarkup:
     inline_markup = InlineKeyboardMarkup()
-    for name, accounts in workplaces.items():
-        title = f'{name} - {accounts}'
-        btn = InlineKeyboardButton(title, callback_data=name)
+    for _enum in inlines:
+        title = f"{_enum.value}"
+        btn = InlineKeyboardButton(title, callback_data=_enum.name)
         inline_markup.add(btn)
 
     return inline_markup
+
+
+def generate_configure_inline_markup() -> InlineKeyboardMarkup:
+    return generate_inline_markup(ConfigureButtons)
+
+
+def generate_configure_interval_markup(**kwargs) -> InlineKeyboardMarkup:
+    return generate_inline_markup(ConfigureInterval)
+
+
+configure_button_to_markups = {
+    ConfigureButtons.INTERVAL.name: generate_configure_interval_markup
+}

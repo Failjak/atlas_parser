@@ -1,10 +1,15 @@
 import os
 
+from aiogram_datepicker import DatepickerSettings
 from pydantic import BaseSettings
 
 
 class BotSettings(BaseSettings):
     bot_token: str
+
+
+def _get_datepicker_settings():
+    return DatepickerSettings()
 
 
 if os.environ.get("IS_HEROKU", None):

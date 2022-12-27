@@ -10,6 +10,8 @@ python-dotenv = "*"
 loguru = "*"
 pydantic = "*"
 aiogram = "*"
+install = "*"
+aiogram-datepicker = "*"
 
 [dev-packages]
 

@@ -1,12 +1,19 @@
-import requests
+import asyncio
+import datetime
+
+import aiohttp
 from bs4 import BeautifulSoup, ResultSet, Tag
 from loguru import logger
+
+from parser.dto import ParserDto
+from parser.settings import ParserSettings
 
 file_name = "index.html"
 
 
-def get_html_via_url(url):
-    return requests.get(url).text
+async def get_html_via_url(url):
+    async with aiohttp.request("get", url) as resp:
+        return await resp.text()
 
 
 def write_html_to_file(html):
@@ -64,12 +71,12 @@ def generate_info_from_trip_v2(trip: Tag):
     return f"Leave time: {leave_time}, arrival time: {arrival_time}; Count of seats: {seats}, price: {price}\n"
 
 
-def run_parser(url, **kwargs):
+async def parse(url, **kwargs):
     if kwargs.get("debug"):
         html = get_html_form_file()
     else:
         logger.log(0, "Send request")
-        html = get_html_via_url(url)
+        html = await get_html_via_url(url)
         if kwargs.get("write_to_file"): write_html_to_file(html)
 
     trips: ResultSet = find_all_trips(html)
@@ -81,5 +88,22 @@ def run_parser(url, **kwargs):
     for trip in available_trips:
         infos += generate_info_from_trip_v2(trip)
 
-    logger.success(f"Number of available trips: {len(available_trips)}\n{infos}")
-    return infos
+    msg = f"Number of available trips: {len(available_trips)}\n{infos}"
+
+    if not kwargs.get("only_if_exist"):
+        logger.success(msg)
+        return f"{datetime.datetime.now().strftime('%m/%d, %H:%M:%S')} - {msg}"
+    elif len(available_trips):
+        logger.success(msg)
+        return f"{datetime.datetime.now().strftime('%m/%d, %H:%M:%S')} - {msg}"
+
+
+async def run_parser(settings: ParserSettings, params: ParserDto, **kwargs):
+    url = settings.url.format(params.departure_place, params.arrival_place, params.date)
+
+    try:
+        while True:
+            yield await parse(url, only_if_exist=True)
+            await asyncio.sleep(params.interval)
+    except KeyboardInterrupt:
+        logger.info("Stop Atlas Parser")
