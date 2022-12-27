@@ -104,6 +104,6 @@ async def run_parser(settings: ParserSettings, params: ParserDto, **kwargs):
     try:
         while True:
             yield await parse(url, only_if_exist=True)
-            await asyncio.sleep(params.interval)
+            await asyncio.sleep(params.interval * 60)
     except KeyboardInterrupt:
         logger.info("Stop Atlas Parser")
