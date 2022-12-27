@@ -3,6 +3,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
 
+from bot.constants import DEFAULT_INTERVAL
 from bot.handlers.keyboard import get_markup
 from bot.handlers.base.states import ChooseTripState
 from bot.handlers.base.utils import generate_final_route
@@ -15,19 +16,16 @@ from parser.settings import parser_settings
 async def cmd_start(message: types.Message, state: FSMContext):
     await state.finish()
 
-    user_id = message.from_user.id
+    chat_id = message.chat.id
     dispatcher = Dispatcher.get_current()
-    await dispatcher.storage.set_data(user=user_id, data={"interval": 120})
+    await dispatcher.storage.set_data(chat=chat_id, data={"interval": 2})
 
     markup = get_markup()
     await message.answer("Atlas Schedule Menu:", reply_markup=markup)
 
 
 async def start_trip_choosing(message: types.Message, state: FSMContext):
-    user_id = message.from_id
-    await state.update_data(user_id=user_id)
     await ChooseTripState.place_of_departure.set()
-
     await message.answer("Место отправления:")
 
 
@@ -60,14 +58,12 @@ async def _process_datepicker(callback_query: types.CallbackQuery, callback_data
 
 
 async def info_presentation(message: types.Message, state: FSMContext, **kwargs):
-    data = await state.get_data()
-
-    user_id = message.from_user.id
+    chat_id = message.chat.id
     dispatcher = Dispatcher.get_current()
-    memory = await dispatcher.storage.get_data(user=user_id)
+    memory = await dispatcher.storage.get_data(chat=chat_id)
 
-    parser_dto = ParserDto(departure_place=data.get("departure_place"), arrival_place=data.get("arrival_place"),
-                           date=data.get("date"), interval=memory.get("interval", 300))
+    parser_dto = ParserDto(departure_place=memory.get("departure_place"), arrival_place=memory.get("arrival_place"),
+                           date=memory.get("date"), interval=memory.get("interval", DEFAULT_INTERVAL))
 
     route = generate_final_route(parser_dto)
     await message.answer(f"Конечный маршрут: {route}")

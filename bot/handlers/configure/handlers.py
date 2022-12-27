@@ -16,14 +16,14 @@ async def configurations(message: types.Message, **kwargs):
 async def _process_configurations(callback_query: types.CallbackQuery, state: FSMContext):
     cq_data = callback_query.data
 
-    user_id = callback_query.from_user.id
+    chat_id = callback_query.message.chat.id
     dispatcher = Dispatcher.get_current()
 
     msg = "Текущий интервал - {} мин\nДля изменения интервала, выберите один из вариантов " \
           "(после изменения перезапустите поиск):"
 
     if ConfigureButtons.get(cq_data) == ConfigureButtons.INTERVAL:
-        data = await dispatcher.storage.get_data(user=user_id)
+        data = await dispatcher.storage.get_data(chat=chat_id)
 
         markup_generator = configure_button_to_markups.get(callback_query.data)
 
@@ -32,7 +32,7 @@ async def _process_configurations(callback_query: types.CallbackQuery, state: FS
 
     elif new_interval := ConfigureInterval.get(cq_data):
         interval = new_interval.name.split("_")[1]
-        await dispatcher.storage.update_data(user=user_id, data={"interval": interval})
+        await dispatcher.storage.update_data(chat=chat_id, data={"interval": interval})
 
         markup = callback_query.message.reply_markup
         try:
