@@ -44,8 +44,11 @@ def generate_inline_markup(inlines: type(Enum)) -> InlineKeyboardMarkup:
     return inline_markup
 
 
-def generate_configure_inline_markup() -> InlineKeyboardMarkup:
-    return generate_inline_markup(ConfigureButtons)
+def generate_configure_inline_markup(is_run: bool) -> InlineKeyboardMarkup:
+    inline_markup = generate_inline_markup(ConfigureButtons)
+    btn = InlineKeyboardButton(f"Поиск билетов - {is_run}", callback_data="IS_RUNNING")
+    inline_markup.add(btn)
+    return inline_markup
 
 
 def generate_configure_interval_markup(**kwargs) -> InlineKeyboardMarkup:
