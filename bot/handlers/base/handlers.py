@@ -7,9 +7,10 @@ from aiogram_datepicker import Datepicker
 from loguru import logger
 
 from bot.constants import DEFAULT_INTERVAL
-from bot.handlers.keyboard import get_markup
+from bot.errors import InvalidUrlException, TicketsNotFoundException
 from bot.handlers.base.states import ChooseTripState
 from bot.handlers.base.utils import generate_final_route
+from bot.handlers.keyboard import get_markup
 from bot.settings import _get_datepicker_settings
 from parser.dto import ParserDto
 from parser.parser import run_parser
@@ -29,10 +30,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("Atlas Schedule Menu:", reply_markup=markup)
 
 
-async def cmd_stop(message: types.Message):
-    chat_id = message.chat.id
-    dispatcher = Dispatcher.get_current()
-    await dispatcher.storage.set_data(chat=chat_id, data={"run": False})
+async def cmd_stop(message: types.Message, state: FSMContext):
+    await state.update_data(is_run=False)
+    await message.answer("Поиск билетов остановлен")
 
 
 async def start_trip_choosing(message: types.Message):
@@ -60,8 +60,8 @@ async def _process_datepicker(callback_query: types.CallbackQuery, callback_data
 
     date = await datepicker.process(callback_query, callback_data)
     if date:
-        date = date.strftime('%Y-%m-%d')
-        await callback_query.message.answer(date)
+        str_date = date.strftime('%Y-%m-%d')
+        await callback_query.message.answer(str_date)
         await state.update_data(date=date)
         await info_presentation(message=callback_query.message, state=state)
     else:
@@ -84,18 +84,28 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
     route = generate_final_route(parser_dto)
     await message.answer(f"Конечный маршрут: {route}")
 
+    await state.update_data(is_run=True)
     logger.log("BOT", f"Start parsing for chat_id: `{chat_id}`")
-    while memory.get("run", True):
-        info = await run_parser(parser_settings, parser_dto)
 
-        if parser_dto.send_only_if_exist:
-            if info: await message.answer(info)
-        else:
-            await message.answer(info if info else "Нет мест")
+    while (await dispatcher.storage.get_data(chat=chat_id)).get("is_run"):
+        try:
+            info = await run_parser(parser_settings, parser_dto)
 
-        await asyncio.sleep(parser_dto.interval * 60)
-        memory = await dispatcher.storage.get_data(chat=chat_id)
+            if parser_dto.send_only_if_exist:
+                if info: await message.answer(info)
+            else:
+                await message.answer(info if info else "Нет мест")
+
+            await asyncio.sleep(parser_dto.interval * 60)
+
+        except InvalidUrlException:
+            await message.answer("Рейсов не найдено. Измените точки маршрута.")
+            break
+
+        except TicketsNotFoundException:
+            await message.answer(f"К сожалению, доступных рейсов на {parser_dto.date.strftime('%d %B')} нет")
+            break
 
     logger.log("BOT", f"Parsing for chat_id: `{chat_id}` has been stopped")
-
     await state.finish()
+    await state.update_data(is_run=False)
