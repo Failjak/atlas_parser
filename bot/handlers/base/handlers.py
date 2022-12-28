@@ -7,6 +7,7 @@ from aiogram_datepicker import Datepicker
 from loguru import logger
 
 from bot.constants import DEFAULT_INTERVAL
+from bot.errors import InvalidUrlException
 from bot.handlers.keyboard import get_markup
 from bot.handlers.base.states import ChooseTripState
 from bot.handlers.base.utils import generate_final_route
@@ -86,16 +87,20 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
 
     logger.log("BOT", f"Start parsing for chat_id: `{chat_id}`")
     while memory.get("run", True):
-        info = await run_parser(parser_settings, parser_dto)
+        try:
+            info = await run_parser(parser_settings, parser_dto)
 
-        if parser_dto.send_only_if_exist:
-            if info: await message.answer(info)
-        else:
-            await message.answer(info if info else "Нет мест")
+            if parser_dto.send_only_if_exist:
+                if info: await message.answer(info)
+            else:
+                await message.answer(info if info else "Нет мест")
 
-        await asyncio.sleep(parser_dto.interval * 60)
-        memory = await dispatcher.storage.get_data(chat=chat_id)
+            await asyncio.sleep(parser_dto.interval * 60)
+            memory = await dispatcher.storage.get_data(chat=chat_id)
+
+        except InvalidUrlException:
+            await message.answer(f"Рейсов не найдено. Измените точки маршрута.")
+            break
 
     logger.log("BOT", f"Parsing for chat_id: `{chat_id}` has been stopped")
-
     await state.finish()

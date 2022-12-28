@@ -1,10 +1,11 @@
-import asyncio
 import datetime
+from typing import List, Optional
 
 import aiohttp
 from bs4 import BeautifulSoup, ResultSet, Tag
 from loguru import logger
 
+from bot.errors import InvalidUrlException
 from parser.dto import ParserDto
 from parser.settings import ParserSettings
 
@@ -33,14 +34,17 @@ def find_all_trips(html) -> ResultSet:
     return main_div.find_all("div", class_=looking_classes)
 
 
-def find_non_empty_seats(trips: ResultSet):
+def find_non_empty_seats(trips: ResultSet) -> Optional[List]:
     seats = []
 
     for trip in trips:
         try:
             seats_text = trip.div.div.find("button").text
-        except AttributeError:  # if there is an additional frame
+        except AttributeError:
+            if trip.div.text == "Рейсов не найдено":
+                raise InvalidUrlException
             seats_text = trip.div.div.find_next_sibling("div").find("button").text
+
         if seats_text != 'Нет мест':
             seats.append(trip.div.div.div)
 
