@@ -87,6 +87,9 @@ async def parse(url, **kwargs):
 
     logger.log("PARSER", "Info generating")
 
+    if not available_trips:
+        return None
+
     infos = ""
     for trip in available_trips:
         infos += generate_info_from_trip_v2(trip)
