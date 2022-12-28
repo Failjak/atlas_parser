@@ -4,6 +4,7 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
+from loguru import logger
 
 from bot.constants import DEFAULT_INTERVAL
 from bot.handlers.keyboard import get_markup
@@ -73,6 +74,7 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
     memory = await dispatcher.storage.get_data(chat=chat_id)
 
     parser_dto = ParserDto(
+        send_only_if_exist=True,
         departure_place=memory.get("departure_place"),
         arrival_place=memory.get("arrival_place"),
         date=memory.get("date"),
@@ -82,9 +84,18 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
     route = generate_final_route(parser_dto)
     await message.answer(f"Конечный маршрут: {route}")
 
+    logger.log("BOT", f"Start parsing for chat_id: `{chat_id}`")
     while memory.get("run", True):
-        await run_parser(parser_settings, parser_dto)
+        info = await run_parser(parser_settings, parser_dto)
+
+        if parser_dto.send_only_if_exist:
+            if info: await message.answer(info)
+        else:
+            await message.answer(info if info else "Нет мест")
+
         await asyncio.sleep(parser_dto.interval * 60)
         memory = await dispatcher.storage.get_data(chat=chat_id)
+
+    logger.log("BOT", f"Parsing for chat_id: `{chat_id}` has been stopped")
 
     await state.finish()

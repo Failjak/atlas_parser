@@ -5,10 +5,9 @@ from loguru import logger
 
 from bot.handlers.registration import registration_handlers, register_configure_handlers
 from bot.settings import bot_settings
-from parser.settings import parser_settings
 
 
-def main(dispatcher: Dispatcher, bot: Bot):
+def main(dispatcher: Dispatcher):
     registration_handlers(dispatcher)
     register_configure_handlers(dispatcher)
 
@@ -20,7 +19,6 @@ def run_bot():
 
     main(
         dispatcher=dp,
-        bot=bot,
     )
 
     logger.info('Start polling')

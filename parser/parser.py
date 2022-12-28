@@ -78,30 +78,24 @@ async def parse(url, **kwargs):
     if kwargs.get("debug"):
         html = get_html_form_file()
     else:
-        logger.log(0, "Send request")
+        logger.log("PARSER", "Send request")
         html = await get_html_via_url(url)
         if kwargs.get("write_to_file"): write_html_to_file(html)
 
     trips: ResultSet = find_all_trips(html)
     available_trips = find_non_empty_seats(trips)
 
-    logger.log(0, "Info generating")
+    logger.log("PARSER", "Info generating")
 
     infos = ""
     for trip in available_trips:
         infos += generate_info_from_trip_v2(trip)
 
     msg = f"Number of available trips: {len(available_trips)}\n{infos}"
-
-    if not kwargs.get("only_if_exist"):
-        logger.success(msg)
-        return f"{datetime.datetime.now().strftime('%m/%d, %H:%M:%S')} - {msg}"
-    elif len(available_trips):
-        logger.success(msg)
-        return f"{datetime.datetime.now().strftime('%m/%d, %H:%M:%S')} - {msg}"
+    return f"{datetime.datetime.now().strftime('%m/%d, %H:%M:%S')} - {msg}"
 
 
 async def run_parser(settings: ParserSettings, params: ParserDto, **kwargs):
     url = settings.url.format(params.departure_place.capitalize(), params.arrival_place.capitalize(), params.date)
-    # logger.debug(url)
-    await parse(url, only_if_exist=True)
+    logger.log("PARSER", f"URL: {url}")
+    return await parse(url)
