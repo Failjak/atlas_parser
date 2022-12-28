@@ -5,7 +5,7 @@ import aiohttp
 from bs4 import BeautifulSoup, ResultSet, Tag
 from loguru import logger
 
-from bot.errors import InvalidUrlException
+from bot.errors import InvalidUrlException, TicketsNotFoundException
 from parser.dto import ParserDto
 from parser.settings import ParserSettings
 
@@ -38,11 +38,13 @@ def find_non_empty_seats(trips: ResultSet) -> Optional[List]:
     seats = []
 
     for trip in trips:
+        if trip.h3 and trip.h3.text == "Билеты не найдены":
+            raise TicketsNotFoundException
+
         try:
             seats_text = trip.div.div.find("button").text
         except AttributeError:
-            if trip.div.text == "Рейсов не найдено":
-                raise InvalidUrlException
+            if trip.div.text == "Рейсов не найдено": raise InvalidUrlException
             seats_text = trip.div.div.find_next_sibling("div").find("button").text
 
         if seats_text != 'Нет мест':
