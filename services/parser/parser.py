@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup, ResultSet, Tag
 from loguru import logger
 
 from bot.errors import InvalidUrlException, TicketsNotFoundException
-from parser.dto import ParserDto
-from parser.settings import ParserSettings
+from services.parser.dto import ParserDto
+from services.parser.settings import ParserSettings
 
 file_name = "index.html"
 
