@@ -109,3 +109,4 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
 
     logger.log("BOT", f"Parsing for chat_id: `{chat_id}` has been stopped")
     await state.finish()
+    await state.update_data(is_run=False)
