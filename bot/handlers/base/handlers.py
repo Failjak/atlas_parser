@@ -89,7 +89,8 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
     api = AtlasAPI()
     try:
         dep_city = await api.get_city_by_name(city_name=parser_dto.departure_place, city_type=CityType.DEPARTURE)
-        arrival_city = await api.get_city_by_name(from_id=dep_city.id, city_name=parser_dto.arrival_place, city_type=CityType.ARRIVAL)
+        arrival_city = await api.get_city_by_name(from_id=dep_city.id, city_name=parser_dto.arrival_place,
+                                                  city_type=CityType.ARRIVAL)
 
         while (await dispatcher.storage.get_data(chat=chat_id)).get("is_run"):
             trips = await api.get_all_trips(dep_city, arrival_city, parser_dto.date)
@@ -110,3 +111,4 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
 
     logger.log("BOT", f"Parsing for chat_id: `{chat_id}` has been stopped")
     await state.finish()
+    await state.update_data(is_run=False)
