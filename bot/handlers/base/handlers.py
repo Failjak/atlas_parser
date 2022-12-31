@@ -14,6 +14,7 @@ from bot.settings import _get_datepicker_settings
 from services.atlas.atlas_api import AtlasAPI
 from services.atlas.dto import DateTrips
 from services.atlas.exceptions import InvalidCity, TooFrequentRequests
+from services.atlas.types import CityType
 from services.parser.dto import ParserDto
 
 
@@ -87,8 +88,9 @@ async def info_presentation(message: types.Message, state: FSMContext, **kwargs)
 
     api = AtlasAPI()
     try:
-        dep_city = await api.get_departure_city_by_name(city_name=parser_dto.departure_place)
-        arrival_city = await api.get_arrival_city_by_name(from_id=dep_city.id, city_name=parser_dto.arrival_place)
+        dep_city = await api.get_city_by_name(city_name=parser_dto.departure_place, city_type=CityType.DEPARTURE)
+        arrival_city = await api.get_city_by_name(from_id=dep_city.id, city_name=parser_dto.arrival_place,
+                                                  city_type=CityType.ARRIVAL)
 
         while (await dispatcher.storage.get_data(chat=chat_id)).get("is_run"):
             trips = await api.get_all_trips(dep_city, arrival_city, parser_dto.date)
