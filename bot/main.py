@@ -4,6 +4,7 @@ from aiogram.utils import executor
 from loguru import logger
 
 from bot.handlers.registration import registration_handlers, register_configure_handlers
+from bot.services.trip_search import stop_all_tips_searching
 from bot.settings import bot_settings
 
 
@@ -23,4 +24,5 @@ def run_bot():
 
     logger.info('Start polling')
     executor.start_polling(dp, skip_updates=True)
+    stop_all_tips_searching()
     logger.info('Finish')

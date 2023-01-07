@@ -1,6 +1,6 @@
 import datetime
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -10,3 +10,5 @@ class ParserDto:
     arrival_place: str
     date: datetime.date
     interval: int
+
+    dict = asdict

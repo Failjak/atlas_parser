@@ -12,6 +12,8 @@ pydantic = "*"
 aiogram = "*"
 install = "*"
 aiogram-datepicker = "*"
+pymongo = "*"
+apscheduler = "*"
 
 [dev-packages]
 

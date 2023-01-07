@@ -1,20 +1,16 @@
 import datetime
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Optional, Dict
 
 from services.atlas.api import API
 from services.atlas.constants import ATLAS_NAME_TO_ID
 from services.atlas.dto import City, DateTrips, Trip
 from services.atlas.exceptions import InvalidCity
-from services.atlas.types import CityType
 
 
 class AtlasAPI(API):
     search_url = "https://atlasbus.by/api/search?from_id={}&to_id={}&calendar_width=30&date={}&passengers=1"
     info_url = "https://atlasbus.by/api/search/suggest?user_input=&from_id={}&to_id={}&locale=ru"
-
-    def __init__(self):
-        pass
 
     async def get_all_trips(self, departure_city: City, arrival_city: City, date: datetime.date) -> DateTrips | str:
         url = self.search_url.format(departure_city.id, arrival_city.id, date.strftime("%Y-%m-%d"))
@@ -56,15 +52,15 @@ class AtlasAPI(API):
 
         return trips
 
-    # async def get_all_departure_cities(self) -> List[City]:
-    #     json_cities = await self.get_info_response(self.info_url)
-    #     cities = [City(**js_city) for js_city in json_cities]
-    #     return cities
+    async def get_all_departure_cities(self) -> List[City]:
+        json_cities = await self.get_info_response(self.info_url)
+        cities = [City(**js_city) for js_city in json_cities]
+        return cities
 
-    # async def get_all_arrival_cities(self, from_id: str) -> List[City]:
-    #     json_cities = await self.get_info_response(self.info_url, from_id=from_id)
-    #     cities = [City(**js_city) for js_city in json_cities]
-    #     return cities
+    async def get_all_arrival_cities(self, from_id: str) -> List[City]:
+        json_cities = await self.get_info_response(self.info_url, from_id=from_id)
+        cities = [City(**js_city) for js_city in json_cities]
+        return cities
 
     async def get_all_departure_cities_as_dict(self) -> Dict:
         json_cities = await self.get_info_response(self.info_url)
@@ -74,14 +70,18 @@ class AtlasAPI(API):
         json_cities = await self.get_info_response(self.info_url, from_id=from_id)
         return {js_city.get('name'): City(**js_city) for js_city in json_cities}
 
-    async def get_city_by_name(self, city_name: str, city_type: CityType, **kwargs):
-        if city_type == CityType.DEPARTURE:
-            dict_cities = await self.get_all_departure_cities_as_dict()
-        else:
-            dict_cities = await self.get_all_arrival_cities_as_dict(from_id=kwargs.get("from_id"))
+    async def get_departure_city_by_name(self, city_name) -> Optional[City]:
+        if city := ATLAS_NAME_TO_ID.get(city_name.capitalize()): return city
 
-        if city := ATLAS_NAME_TO_ID.get(city_name.capitalize()) or dict_cities.get(city_name.capitalize()):
-            return city
+        dict_cities = await self.get_all_departure_cities_as_dict()
+        if city := dict_cities.get(city_name.capitalize()): return city
+        raise InvalidCity
+
+    async def get_arrival_city_by_name(self, from_id: str, city_name: str) -> Optional[City]:
+        if city := ATLAS_NAME_TO_ID.get(city_name.capitalize()): return city
+
+        dict_cities = await self.get_all_arrival_cities_as_dict(from_id=from_id)
+        if city := dict_cities.get(city_name.capitalize()): return city
 
         raise InvalidCity
 

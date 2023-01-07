@@ -8,12 +8,11 @@ from bot.handlers.keyboard import generate_configure_inline_markup, configure_bu
 
 
 async def configurations(message: types.Message, **kwargs):
-
     chat_id = message.chat.id
     dispatcher = Dispatcher.get_current()
     memory = await dispatcher.storage.get_data(chat=chat_id)
 
-    markup = generate_configure_inline_markup(memory.get("is_run", False))
+    markup = generate_configure_inline_markup()
     await message.answer("Конфигурация:", reply_markup=markup)
     await ConfigureState.choose_configure.set()
 
