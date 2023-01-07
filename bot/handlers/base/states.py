@@ -6,3 +6,7 @@ class ChooseTripState(StatesGroup):
     place_of_arrival = State()
     select_date = State()
     send_info = State()
+
+
+class ChooseTripSearch(StatesGroup):
+    choose_trip = State()

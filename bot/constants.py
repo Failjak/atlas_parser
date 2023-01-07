@@ -11,6 +11,18 @@ class EnumWithGet(Enum):
         except KeyError:
             return None
 
+    @classmethod
+    def get_by_value(cls, value: str):
+        try:
+            return cls.__call__(value)
+        except ValueError:
+            return None
+
+    @classmethod
+    def all(cls):
+        for item in cls:
+            yield item.name, item.value
+
 
 class ConfigureButtons(EnumWithGet):
     INTERVAL = "Интервал запросов"
@@ -22,3 +34,8 @@ class ConfigureInterval(EnumWithGet):
     PER_15_MINUTES = "Каждые 15 минуты"
     PER_30_MINUTES = "Каждые 30 минуты"
     PER_60_MINUTES = "Каждые 60 минут"
+
+
+class LookingTripState(EnumWithGet):
+    ON = "Включен"
+    OFF = "Выключен"
