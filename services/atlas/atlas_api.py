@@ -12,9 +12,6 @@ class AtlasAPI(API):
     search_url = "https://atlasbus.by/api/search?from_id={}&to_id={}&calendar_width=30&date={}&passengers=1"
     info_url = "https://atlasbus.by/api/search/suggest?user_input=&from_id={}&to_id={}&locale=ru"
 
-    def __init__(self):
-        pass
-
     async def get_all_trips(self, departure_city: City, arrival_city: City, date: datetime.date) -> DateTrips | str:
         url = self.search_url.format(departure_city.id, arrival_city.id, date.strftime("%Y-%m-%d"))
         response = await self.send_arequest(url)
@@ -74,15 +71,18 @@ class AtlasAPI(API):
         return {js_city.get('name'): City(**js_city) for js_city in json_cities}
 
     async def get_departure_city_by_name(self, city_name) -> Optional[City]:
+        if city := ATLAS_NAME_TO_ID.get(city_name.capitalize()): return city
+
         dict_cities = await self.get_all_departure_cities_as_dict()
         if city := dict_cities.get(city_name.capitalize()): return city
         raise InvalidCity
 
     async def get_arrival_city_by_name(self, from_id: str, city_name: str) -> Optional[City]:
-        dict_cities = await self.get_all_arrival_cities_as_dict(from_id=from_id)
-
         if city := ATLAS_NAME_TO_ID.get(city_name.capitalize()): return city
+
+        dict_cities = await self.get_all_arrival_cities_as_dict(from_id=from_id)
         if city := dict_cities.get(city_name.capitalize()): return city
+
         raise InvalidCity
 
     async def get_info_response(self, url, **kwargs):
