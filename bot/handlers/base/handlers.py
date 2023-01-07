@@ -14,7 +14,7 @@ from services.atlas.atlas_api import AtlasAPI
 from services.atlas.dto import LookingTripParams
 from services.atlas.exceptions import InvalidCity
 from services.mongo.mongo import Mongo
-from services.mongo.settings import MongoSettings
+from services.mongo.settings import mongo_settings
 
 
 async def cmd_start(message: types.Message, state: FSMContext):
@@ -87,7 +87,7 @@ async def _save_params(message: types.Message):
         chat_id=chat_id,
     )
 
-    mongo = Mongo(settings=MongoSettings())
+    mongo = Mongo(settings=mongo_settings)
     mongo.put_param(data=params.dict())
     return await message.answer(f"Параметры поиска сохранены: {params.full_path}")
 
@@ -95,7 +95,7 @@ async def _save_params(message: types.Message):
 async def choose_trip_to_start_searching(message: types.Message, **kwargs):
     chat_id = message.chat.id
 
-    mongo = Mongo(settings=MongoSettings())
+    mongo = Mongo(settings=mongo_settings)
     params = mongo.get_params(chat_id=chat_id)
     markup = generate_trip_params_inline_markup(params)
     await message.answer("Доступные маршруты:", reply_markup=markup)
@@ -107,7 +107,7 @@ async def handle_chosen_trip(callback: types.CallbackQuery, **kwargs):
         return await callback.answer(callback.data)
         # return await callback.answer("Что-то не то. Попробуйте еще раз")
 
-    mongo = Mongo(settings=MongoSettings())
+    mongo = Mongo(settings=mongo_settings)
     param: LookingTripParams = mongo.retrieve_param(param_id=callback.data)
     if not param or not isinstance(param, LookingTripParams):
         return await callback.answer("Параметры не найдены")
