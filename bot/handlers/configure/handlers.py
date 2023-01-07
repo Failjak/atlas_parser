@@ -8,7 +8,6 @@ from bot.handlers.keyboard import generate_configure_inline_markup, configure_bu
 
 
 async def configurations(message: types.Message, **kwargs):
-
     chat_id = message.chat.id
     dispatcher = Dispatcher.get_current()
     memory = await dispatcher.storage.get_data(chat=chat_id)
