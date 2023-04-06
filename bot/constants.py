@@ -26,9 +26,11 @@ class EnumWithGet(Enum):
 
 class ConfigureButtons(EnumWithGet):
     INTERVAL = "Интервал запросов"
+    STATE = "Статус"
 
 
 class ConfigureInterval(EnumWithGet):
+    PER_1_MINUTES = "Каждую минуту"
     PER_4_MINUTES = "Каждые 4 минуты"
     PER_10_MINUTES = "Каждые 10 минуты"
     PER_15_MINUTES = "Каждые 15 минуты"
@@ -37,5 +39,10 @@ class ConfigureInterval(EnumWithGet):
 
 
 class LookingTripState(EnumWithGet):
-    ON = "Включен"
-    OFF = "Выключен"
+    ON = "ON"
+    OFF = "OFF"
+
+
+class TripConfigureType(EnumWithGet):
+    INTERVAL = "INTERVAL"
+    STATE = "STATE"

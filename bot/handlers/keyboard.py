@@ -3,14 +3,14 @@ from typing import List, Generator
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot.constants import ConfigureButtons, ConfigureInterval
+from bot.constants import ConfigureButtons, ConfigureInterval, TripConfigureType
 from services.atlas.dto import LookingTripParams
 
 
 class BaseCommands(Enum):
     CHOOSE_TRIP = "Выбрать маршрут"
     ADD_TRIP = "Добавить маршрут"
-    STOP_LOOKING = "Остановить поиск"
+    STOP_LOOKING = "Остановить поиск всех маршрутов"
     CONFIGURATION = "Настройки"
 
 
@@ -54,16 +54,30 @@ def generate_configure_interval_markup(**kwargs) -> InlineKeyboardMarkup:
     return generate_inline_markup(ConfigureInterval.all())
 
 
-def generate_trip_params_inline_markup(trip_params: List[LookingTripParams]) -> InlineKeyboardMarkup:
+def generate_trips_inline_markup(trip_params: List[LookingTripParams]) -> InlineKeyboardMarkup:
     inline_markup = InlineKeyboardMarkup()
 
     for trip in trip_params:
         title = f"{trip.full_path}"
-        btn = InlineKeyboardButton(title, callback_data=trip.full_path)
+        btn = InlineKeyboardButton(title, callback_data=str(trip.id))
         inline_markup.add(btn)
+    return inline_markup
 
-        btn_state = InlineKeyboardButton(trip.state.value, callback_data=str(trip.id))
-        inline_markup.insert(btn_state)
+
+def generate_trip_settings_inline_markup(trip: LookingTripParams) -> InlineKeyboardMarkup:
+    inline_markup = InlineKeyboardMarkup()
+
+    btn_state = InlineKeyboardButton(
+        trip.state.value,
+        callback_data=str({'trip_id': str(trip.id),  'type': TripConfigureType.STATE.value})
+    )
+    inline_markup.add(btn_state)
+
+    btn_interval = InlineKeyboardButton(
+        f"{trip.interval} мин",
+        callback_data=str({'trip_id': str(trip.id), 'type': TripConfigureType.INTERVAL.value})
+    )
+    inline_markup.insert(btn_interval)
 
     return inline_markup
 
@@ -76,5 +90,5 @@ def change_markup_button_text_by_callback(markup: InlineKeyboardMarkup, callback
 
 
 configure_button_to_markups = {
-    ConfigureButtons.INTERVAL.name: generate_configure_interval_markup
+    TripConfigureType.INTERVAL.value: generate_configure_interval_markup
 }

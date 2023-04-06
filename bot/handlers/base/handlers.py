@@ -4,11 +4,12 @@ from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
 from bson import ObjectId
 
-from bot.constants import DEFAULT_INTERVAL, LookingTripState
-from bot.handlers.base.states import ChooseTripState, ChooseTripSearch
-from bot.handlers.keyboard import get_markup, generate_trip_params_inline_markup, change_markup_button_text_by_callback
-from bot.services.trip_search import start_searching_trip, change_searching_trip_state, stop_trip_searching, \
-    stop_all_tips_searching
+from bot.constants import DEFAULT_INTERVAL, TripConfigureType, ConfigureInterval
+from bot.handlers.base.constants import CHANGE_INTERVAL_MESSAGE
+from bot.handlers.base.states import ChooseTripState, ChooseTripSearchState, TripConfigureState
+from bot.handlers.keyboard import get_markup, generate_trips_inline_markup, \
+    generate_trip_settings_inline_markup, configure_button_to_markups
+from bot.services.trip_search import stop_all_tips_searching
 from bot.settings import _get_datepicker_settings
 from services.atlas.atlas_api import AtlasAPI
 from services.atlas.dto import LookingTripParams
@@ -97,29 +98,69 @@ async def choose_trip_to_start_searching(message: types.Message, **kwargs):
 
     mongo = Mongo(settings=MongoSettings())
     params = mongo.get_params(chat_id=chat_id)
-    markup = generate_trip_params_inline_markup(params)
+    markup = generate_trips_inline_markup(params)
     await message.answer("Доступные маршруты:", reply_markup=markup)
-    await ChooseTripSearch.choose_trip.set()
+    await ChooseTripSearchState.choose_trip.set()
 
 
 async def handle_chosen_trip(callback: types.CallbackQuery, **kwargs):
     if not ObjectId.is_valid(callback.data):
         return await callback.answer(callback.data)
-        # return await callback.answer("Что-то не то. Попробуйте еще раз")
 
     mongo = Mongo(settings=MongoSettings())
     param: LookingTripParams = mongo.retrieve_param(param_id=callback.data)
     if not param or not isinstance(param, LookingTripParams):
         return await callback.answer("Параметры не найдены")
 
-    new_state: LookingTripState = change_searching_trip_state(param.state)
-    if new_state == LookingTripState.ON:
-        start_searching_trip(callback.message, param)
-        await callback.answer("Поиск запущен")
-    elif new_state == LookingTripState.OFF:
-        stop_trip_searching(param)
-        await callback.answer("Поиск остановлен")
+    markup = generate_trip_settings_inline_markup(param)
+    await callback.message.edit_text(param.full_path, reply_markup=markup)
+    await ChooseTripSearchState.configure_trip.set()
 
-    markup = callback.message.reply_markup
-    change_markup_button_text_by_callback(markup, callback.data, new_state.value)
-    await callback.message.edit_text(callback.message.text, reply_markup=markup)
+
+async def handle_configure_for_trip(callback: types.CallbackQuery, **kwargs):
+    try:
+        data = eval(callback.data)
+        if not isinstance(data, dict):
+            raise TypeError
+    except TypeError:
+        return await callback.answer("Ошибка, попробуйте еще раз")
+
+    match data['type']:
+        case TripConfigureType.INTERVAL.value:
+            markup_generator = configure_button_to_markups.get(TripConfigureType.INTERVAL.value)
+            await callback.message.edit_text(
+                CHANGE_INTERVAL_MESSAGE.format(data.get('interval', DEFAULT_INTERVAL)),
+                reply_markup=markup_generator(**data)
+            )
+            await TripConfigureState.interval_config_trip.set()
+
+        case TripConfigureType.STATE.value:
+            await TripConfigureState.state_config_trip.set()
+
+
+async def handle_interval_config_for_trip(callback: types.CallbackQuery, **kwargs):
+    new_interval = ConfigureInterval.get(callback.data)
+    interval = int(new_interval.name.split("_")[1])
+    # TODO use api to change request interval
+
+
+async def handle_state_config_for_trip(callback: types.CallbackQuery, **kwargs):
+    try:
+        data = eval(callback.data)
+        if not isinstance(data, dict):
+            raise TypeError
+    except TypeError:
+        return await callback.answer("Ошибка, попробуйте еще раз")
+
+    # state = data['state']
+    #
+    # new_state: LookingTripState = change_searching_trip_state(state)
+    # if new_state == LookingTripState.ON:
+    #     # start_searching_trip(callback.message, param)
+    #     await callback.answer("Поиск запущен")
+    # elif new_state == LookingTripState.OFF:
+    #     # stop_trip_searching(param)
+    #     await callback.answer("Поиск остановлен")
+    #
+    # markup = callback.message.reply_markup
+    # change_markup_button_text_by_callback(markup, callback.data, new_state.value)

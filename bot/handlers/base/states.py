@@ -8,5 +8,11 @@ class ChooseTripState(StatesGroup):
     send_info = State()
 
 
-class ChooseTripSearch(StatesGroup):
+class ChooseTripSearchState(StatesGroup):
     choose_trip = State()
+    configure_trip = State()
+
+
+class TripConfigureState(StatesGroup):
+    interval_config_trip = State()
+    state_config_trip = State()

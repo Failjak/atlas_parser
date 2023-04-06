@@ -81,5 +81,5 @@ class LookingTripParams:
 
     @property
     def full_path(self):
-        return f"{self.date.strftime('%Y-%m-%d')} {self.departure_city.name.capitalize()} --> " \
-               f"{self.arrival_city.name.capitalize()} period: {self.interval} min"
+        return f"{self.date.strftime('%-d %b')} " \
+               f"{self.departure_city.name.capitalize()} --> {self.arrival_city.name.capitalize()}"

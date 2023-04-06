@@ -2,10 +2,10 @@ from aiogram import Dispatcher
 from aiogram_datepicker import Datepicker
 
 from bot.handlers.base.handlers import cmd_start, start_trip_adding, set_arrival_place, set_departure_place, \
-    _process_datepicker, cmd_stop, choose_trip_to_start_searching, handle_chosen_trip
-from bot.handlers.base.states import ChooseTripState, ChooseTripSearch
-from bot.handlers.configure.handlers import configurations, _process_configurations
-from bot.handlers.configure.states import ConfigureState
+    _process_datepicker, cmd_stop, choose_trip_to_start_searching, handle_chosen_trip, handle_configure_for_trip, \
+    handle_interval_config_for_trip, handle_state_config_for_trip
+from bot.handlers.base.states import ChooseTripState, ChooseTripSearchState, TripConfigureState
+from bot.handlers.configure.handlers import configurations
 from bot.handlers.keyboard import BaseCommands
 
 
@@ -35,13 +35,19 @@ def registration_handlers(dp: Dispatcher):
         choose_trip_to_start_searching, lambda m: m.text == BaseCommands.CHOOSE_TRIP.value, state='*'
     )
     dp.register_callback_query_handler(
-        handle_chosen_trip, lambda c: c.data, state=ChooseTripSearch.choose_trip
+        handle_chosen_trip, lambda c: c.data, state=ChooseTripSearchState.choose_trip
+    )
+    dp.register_callback_query_handler(
+        handle_configure_for_trip, lambda c: c.data, state=ChooseTripSearchState.configure_trip
     )
 
 
 def register_callback_configure_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(
-        _process_configurations, state=ConfigureState.choose_configure,
+        handle_interval_config_for_trip, state=TripConfigureState.interval_config_trip,
+    )
+    dp.register_callback_query_handler(
+        handle_state_config_for_trip, state=TripConfigureState.state_config_trip,
     )
 
 
