@@ -6,6 +6,8 @@ DEFAULT_INTERVAL = 10
 class EnumWithGet(Enum):
     @classmethod
     def get(cls, name: str):
+        if not isinstance(name, str):
+            return None
         try:
             return cls[name.upper()]
         except KeyError:
@@ -13,6 +15,8 @@ class EnumWithGet(Enum):
 
     @classmethod
     def get_by_value(cls, value: str):
+        if not isinstance(value, str):
+            return None
         try:
             return cls.__call__(value)
         except ValueError:

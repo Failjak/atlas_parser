@@ -36,11 +36,12 @@ def get_markup() -> ReplyKeyboardMarkup:
     return markup
 
 
-def generate_inline_markup(inlines: Generator) -> InlineKeyboardMarkup:
+def generate_inline_markup(inlines: Generator, **kwargs) -> InlineKeyboardMarkup:
     inline_markup = InlineKeyboardMarkup()
     for (key, value) in inlines:
         title = f"{value}"
-        btn = InlineKeyboardButton(title, callback_data=str(key))
+        callback_data = {'key': str(key), **kwargs}  # TODO case when kwargs = None
+        btn = InlineKeyboardButton(title, callback_data=str(callback_data))
         inline_markup.add(btn)
 
     return inline_markup
@@ -51,7 +52,7 @@ def generate_configure_inline_markup() -> InlineKeyboardMarkup:
 
 
 def generate_configure_interval_markup(**kwargs) -> InlineKeyboardMarkup:
-    return generate_inline_markup(ConfigureInterval.all())
+    return generate_inline_markup(ConfigureInterval.all(), **kwargs)
 
 
 def generate_trips_inline_markup(trip_params: List[LookingTripParams]) -> InlineKeyboardMarkup:
@@ -69,7 +70,7 @@ def generate_trip_settings_inline_markup(trip: LookingTripParams) -> InlineKeybo
 
     btn_state = InlineKeyboardButton(
         trip.state.value,
-        callback_data=str({'trip_id': str(trip.id),  'type': TripConfigureType.STATE.value})
+        callback_data=str({'trip_id': str(trip.id), 'type': TripConfigureType.STATE.value})
     )
     inline_markup.add(btn_state)
 

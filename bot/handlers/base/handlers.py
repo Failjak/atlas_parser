@@ -2,13 +2,10 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
-from bson import ObjectId
 
-from bot.constants import DEFAULT_INTERVAL, TripConfigureType, ConfigureInterval
-from bot.handlers.base.constants import CHANGE_INTERVAL_MESSAGE
-from bot.handlers.base.states import ChooseTripState, ChooseTripSearchState, TripConfigureState
-from bot.handlers.keyboard import get_markup, generate_trips_inline_markup, \
-    generate_trip_settings_inline_markup, configure_button_to_markups
+from bot.constants import DEFAULT_INTERVAL, LookingTripState
+from bot.handlers.base.states import ChooseTripState
+from bot.handlers.keyboard import get_markup
 from bot.services.trip_search import stop_all_tips_searching
 from bot.settings import _get_datepicker_settings
 from services.atlas.atlas_api import AtlasAPI
@@ -86,71 +83,12 @@ async def _save_params(message: types.Message):
         date=memory.get("date"),
         interval=memory.get("interval", DEFAULT_INTERVAL),
         chat_id=chat_id,
+        state=LookingTripState.OFF,
     )
 
     mongo = Mongo(settings=MongoSettings())
-    mongo.put_param(data=params.dict())
+    mongo.put_trip(data=params.dict())
     return await message.answer(f"Параметры поиска сохранены: {params.full_path}")
-
-
-async def choose_trip_to_start_searching(message: types.Message, **kwargs):
-    chat_id = message.chat.id
-
-    mongo = Mongo(settings=MongoSettings())
-    params = mongo.get_params(chat_id=chat_id)
-    markup = generate_trips_inline_markup(params)
-    await message.answer("Доступные маршруты:", reply_markup=markup)
-    await ChooseTripSearchState.choose_trip.set()
-
-
-async def handle_chosen_trip(callback: types.CallbackQuery, **kwargs):
-    if not ObjectId.is_valid(callback.data):
-        return await callback.answer(callback.data)
-
-    mongo = Mongo(settings=MongoSettings())
-    param: LookingTripParams = mongo.retrieve_param(param_id=callback.data)
-    if not param or not isinstance(param, LookingTripParams):
-        return await callback.answer("Параметры не найдены")
-
-    markup = generate_trip_settings_inline_markup(param)
-    await callback.message.edit_text(param.full_path, reply_markup=markup)
-    await ChooseTripSearchState.configure_trip.set()
-
-
-async def handle_configure_for_trip(callback: types.CallbackQuery, **kwargs):
-    try:
-        data = eval(callback.data)
-        if not isinstance(data, dict):
-            raise TypeError
-    except TypeError:
-        return await callback.answer("Ошибка, попробуйте еще раз")
-
-    match data['type']:
-        case TripConfigureType.INTERVAL.value:
-            markup_generator = configure_button_to_markups.get(TripConfigureType.INTERVAL.value)
-            await callback.message.edit_text(
-                CHANGE_INTERVAL_MESSAGE.format(data.get('interval', DEFAULT_INTERVAL)),
-                reply_markup=markup_generator(**data)
-            )
-            await TripConfigureState.interval_config_trip.set()
-
-        case TripConfigureType.STATE.value:
-            await TripConfigureState.state_config_trip.set()
-
-
-async def handle_interval_config_for_trip(callback: types.CallbackQuery, **kwargs):
-    new_interval = ConfigureInterval.get(callback.data)
-    interval = int(new_interval.name.split("_")[1])
-    # TODO use api to change request interval
-
-
-async def handle_state_config_for_trip(callback: types.CallbackQuery, **kwargs):
-    try:
-        data = eval(callback.data)
-        if not isinstance(data, dict):
-            raise TypeError
-    except TypeError:
-        return await callback.answer("Ошибка, попробуйте еще раз")
 
     # state = data['state']
     #

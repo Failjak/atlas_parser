@@ -34,8 +34,8 @@ def stop_all_tips_searching():
     scheduler.remove_all_jobs()
 
 
-def is_job_running(param: LookingTripParams):
-    return LookingTripState.ON if scheduler.get_job(str(param.id)) else LookingTripState.OFF
+# def is_job_running(param: LookingTripParams):
+#     return LookingTripState.ON if scheduler.get_job(str(param.id)) else LookingTripState.OFF
 
 
 def change_searching_trip_state(curr_state: LookingTripState) -> LookingTripState:

@@ -65,9 +65,9 @@ class LookingTripParams:
             self.departure_city = City(**self.departure_city)
         if isinstance(self.arrival_city, dict):
             self.arrival_city = City(**self.arrival_city)
-        if isinstance(self.state, NoneType):
-            from bot.services.trip_search import is_job_running
-            self.state = is_job_running(self)
+        # if isinstance(self.state, NoneType):
+        #     from bot.services.trip_search import is_job_running
+        #     self.state = is_job_running(self)
 
     def __hash__(self):
         return hash((self.id, self.departure_city, self.arrival_city, self.date, self.interval))
@@ -76,7 +76,7 @@ class LookingTripParams:
         dicted = asdict(self)
         dicted["date"] = self.date.strftime("%Y-%m-%d")
         dicted["state"] = self.state.value
-        dicted.pop("state"), dicted.pop("id")
+        dicted.pop("id")
         return dicted
 
     @property
