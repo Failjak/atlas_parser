@@ -1,10 +1,10 @@
 from dataclasses import dataclass, asdict
 from datetime import date, time
-from types import NoneType
 from typing import List
 
 from bson import ObjectId
 
+from bot import emojies
 from bot.constants import LookingTripState
 
 
@@ -65,9 +65,9 @@ class LookingTripParams:
             self.departure_city = City(**self.departure_city)
         if isinstance(self.arrival_city, dict):
             self.arrival_city = City(**self.arrival_city)
-        if isinstance(self.state, NoneType):
-            from bot.services.trip_search import is_job_running
-            self.state = is_job_running(self)
+        # if isinstance(self.state, NoneType):
+        #     from bot.services.trip_search import is_job_running
+        #     self.state = is_job_running(self)
 
     def __hash__(self):
         return hash((self.id, self.departure_city, self.arrival_city, self.date, self.interval))
@@ -76,10 +76,18 @@ class LookingTripParams:
         dicted = asdict(self)
         dicted["date"] = self.date.strftime("%Y-%m-%d")
         dicted["state"] = self.state.value
-        dicted.pop("state"), dicted.pop("id")
+        dicted.pop("id")
         return dicted
 
     @property
-    def full_path(self):
-        return f"{self.date.strftime('%Y-%m-%d')} {self.departure_city.name.capitalize()} --> " \
-               f"{self.arrival_city.name.capitalize()} period: {self.interval} min"
+    def title(self):
+        title = f"{self.date.strftime('%-d %b')} " \
+                f"{self.departure_city.name.capitalize()} --> " \
+                f"{self.arrival_city.name.capitalize()}"
+
+        if self.state == LookingTripState.ON:
+            title += f" {emojies.WORKING_CHECK_MARK}"
+        else:
+            title += f" {emojies.STOPPED_CHECK_MARK}"
+
+        return title
