@@ -59,8 +59,7 @@ def generate_trips_inline_markup(trip_params: List[LookingTripParams]) -> Inline
     inline_markup = InlineKeyboardMarkup()
 
     for trip in trip_params:
-        title = f"{trip.full_path}"
-        btn = InlineKeyboardButton(title, callback_data=str(trip.id))
+        btn = InlineKeyboardButton(trip.title, callback_data=str(trip.id))
         inline_markup.add(btn)
     return inline_markup
 

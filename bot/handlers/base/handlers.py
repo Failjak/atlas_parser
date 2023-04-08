@@ -88,7 +88,7 @@ async def _save_params(message: types.Message):
 
     mongo = Mongo(settings=MongoSettings())
     mongo.put_trip(data=params.dict())
-    return await message.answer(f"Параметры поиска сохранены: {params.full_path}")
+    return await message.answer(f"Параметры поиска сохранены: {params.title}")
 
     # state = data['state']
     #

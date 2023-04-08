@@ -1,11 +1,11 @@
 from dataclasses import dataclass, asdict
 from datetime import date, time
-from types import NoneType
 from typing import List
 
 from bson import ObjectId
 
 from bot.constants import LookingTripState
+from bot.handlers import emojies
 
 
 @dataclass
@@ -80,6 +80,14 @@ class LookingTripParams:
         return dicted
 
     @property
-    def full_path(self):
-        return f"{self.date.strftime('%-d %b')} " \
-               f"{self.departure_city.name.capitalize()} --> {self.arrival_city.name.capitalize()}"
+    def title(self):
+        title = f"{self.date.strftime('%-d %b')} " \
+                f"{self.departure_city.name.capitalize()} --> " \
+                f"{self.arrival_city.name.capitalize()}"
+
+        if self.state == LookingTripState.ON:
+            title += f" {emojies.WORKING_CHECK_MARK}"
+        else:
+            title += f" {emojies.STOPPED_CHECK_MARK}"
+
+        return title

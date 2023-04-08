@@ -34,7 +34,7 @@ async def handle_chosen_trip(callback: types.CallbackQuery, **kwargs):
         return await callback.answer("Параметры не найдены")
 
     markup = generate_trip_settings_inline_markup(param)
-    await callback.message.edit_text(param.full_path, reply_markup=markup)
+    await callback.message.edit_text(param.title, reply_markup=markup)
     await ChooseTripSearchState.configure_trip.set()
 
 
@@ -56,8 +56,8 @@ async def handle_configure_for_trip(callback: types.CallbackQuery, **kwargs):
             await TripConfigureState.interval_config_trip.set()
 
         case TripConfigureType.STATE.value:
-            full_path, markup = await handle_state_config_for_trip(data)
-            await callback.message.edit_text(full_path, reply_markup=markup)
+            title, markup = await handle_state_config_for_trip(data)
+            await callback.message.edit_text(title, reply_markup=markup)
 
 
 async def handle_interval_config_for_trip(callback: types.CallbackQuery):
@@ -76,11 +76,11 @@ async def handle_interval_config_for_trip(callback: types.CallbackQuery):
     mongo.update_trip(trip_id, data={'interval': interval})
     trip_params: LookingTripParams = mongo.retrieve_trip_params(trip_id)
 
-    return trip_params.full_path, generate_trip_settings_inline_markup(trip_params)
+    return trip_params.title, generate_trip_settings_inline_markup(trip_params)
 
 
 async def handle_state_config_for_trip(data: dict):
     trip_id = data['trip_id']
     mongo = Mongo(settings=MongoSettings())
     trip_params: LookingTripParams = mongo.update_trip_state(trip_id)
-    return trip_params.full_path, generate_trip_settings_inline_markup(trip_params)
+    return trip_params.title, generate_trip_settings_inline_markup(trip_params)

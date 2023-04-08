@@ -41,7 +41,7 @@ class Mongo:
                 arrival_city=param.get("arrival_city"),
                 date=param.get("date"),
                 interval=param.get("interval"),
-                state=param.get("state"),
+                state=LookingTripState.get_by_value(param.get('state')),
             ) for param in params
         ] if params else []
 
