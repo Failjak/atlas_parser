@@ -4,8 +4,8 @@ from typing import List
 
 from bson import ObjectId
 
+from bot import emojies
 from bot.constants import LookingTripState
-from bot.handlers import emojies
 
 
 @dataclass

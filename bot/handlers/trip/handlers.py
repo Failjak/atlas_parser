@@ -3,7 +3,7 @@ from typing import List
 from aiogram import types
 from bson import ObjectId
 
-from bot.constants import TripConfigureType, ConfigureInterval
+from bot.constants import TripConfigureType, ConfigureInterval, LookingTripState
 from bot.handlers.base.constants import CHANGE_INTERVAL_MESSAGE
 from bot.handlers.base.states import ChooseTripSearchState, TripConfigureState
 from bot.handlers.keyboard import generate_trips_inline_markup, \
@@ -56,7 +56,7 @@ async def handle_configure_for_trip(callback: types.CallbackQuery, **kwargs):
             await TripConfigureState.interval_config_trip.set()
 
         case TripConfigureType.STATE.value:
-            title, markup = await handle_state_config_for_trip(data)
+            title, markup = await handle_state_config_for_trip(callback.message, data)
             await callback.message.edit_text(title, reply_markup=markup)
 
 
@@ -79,8 +79,16 @@ async def handle_interval_config_for_trip(callback: types.CallbackQuery):
     return trip_params.title, generate_trip_settings_inline_markup(trip_params)
 
 
-async def handle_state_config_for_trip(data: dict):
+async def handle_state_config_for_trip(message: types.Message, data: dict):
+    from bot.services import trip_search
+
     trip_id = data['trip_id']
     mongo = Mongo(settings=MongoSettings())
     trip_params: LookingTripParams = mongo.update_trip_state(trip_id)
+
+    if trip_params.state == LookingTripState.ON:
+        trip_search.start_searching_trip(message, trip_params)
+    elif trip_params.state == LookingTripState.OFF:
+        trip_search.stop_trip_searching(trip_params)
+
     return trip_params.title, generate_trip_settings_inline_markup(trip_params)

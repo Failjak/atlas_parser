@@ -11,7 +11,7 @@ from services.atlas.dto import LookingTripParams
 from services.mongo.settings import MongoSettings
 
 
-class Mongo:
+class Mongo:  # TODO inherit from MongoClient
     def __init__(self, settings: MongoSettings):
         self._settings = settings
 
@@ -63,3 +63,6 @@ class Mongo:
 
         self.update_trip(trip_id, data={"state": new_state.value})
         return self.retrieve_trip_params(trip_id)
+
+    def update_all_trip_state_to_off(self):
+        self.get_collection(self._settings.params_collection).update_many({}, {'$set': {"state": LookingTripState.OFF.value}})

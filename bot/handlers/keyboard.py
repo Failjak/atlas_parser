@@ -10,7 +10,7 @@ from services.atlas.dto import LookingTripParams
 class BaseCommands(Enum):
     CHOOSE_TRIP = "Выбрать маршрут"
     ADD_TRIP = "Добавить маршрут"
-    STOP_LOOKING = "Остановить поиск всех маршрутов"
+    # STOP_LOOKING = "Остановить поиск всех маршрутов"
     CONFIGURATION = "Настройки"
 
 

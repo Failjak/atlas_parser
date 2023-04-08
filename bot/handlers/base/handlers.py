@@ -6,7 +6,6 @@ from aiogram_datepicker import Datepicker
 from bot.constants import DEFAULT_INTERVAL, LookingTripState
 from bot.handlers.base.states import ChooseTripState
 from bot.handlers.keyboard import get_markup
-from bot.services.trip_search import stop_all_tips_searching
 from bot.settings import _get_datepicker_settings
 from services.atlas.atlas_api import AtlasAPI
 from services.atlas.dto import LookingTripParams
@@ -28,9 +27,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("Atlas Schedule Menu:", reply_markup=markup)
 
 
-async def cmd_stop(message: types.Message, **kwargs):
-    stop_all_tips_searching()
-    await message.answer("Поиск билетов остановлен")
+# async def cmd_stop(message: types.Message, **kwargs):
+#     await stop_all_tips_searching()
+#     await message.answer("Поиск билетов остановлен")
 
 
 async def start_trip_adding(message: types.Message):
