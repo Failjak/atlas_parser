@@ -2,13 +2,10 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
-from bson import ObjectId
 
 from bot.constants import DEFAULT_INTERVAL, LookingTripState
-from bot.handlers.base.states import ChooseTripState, ChooseTripSearch
-from bot.handlers.keyboard import get_markup, generate_trip_params_inline_markup, change_markup_button_text_by_callback
-from bot.services.trip_search import start_searching_trip, change_searching_trip_state, stop_trip_searching, \
-    stop_all_tips_searching
+from bot.handlers.base.states import ChooseTripState
+from bot.handlers.keyboard import get_markup
 from bot.settings import _get_datepicker_settings
 from services.atlas.atlas_api import AtlasAPI
 from services.atlas.dto import LookingTripParams
@@ -30,9 +27,9 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("Atlas Schedule Menu:", reply_markup=markup)
 
 
-async def cmd_stop(message: types.Message, **kwargs):
-    stop_all_tips_searching()
-    await message.answer("Поиск билетов остановлен")
+# async def cmd_stop(message: types.Message, **kwargs):
+#     await stop_all_tips_searching()
+#     await message.answer("Поиск билетов остановлен")
 
 
 async def start_trip_adding(message: types.Message):
@@ -85,41 +82,22 @@ async def _save_params(message: types.Message):
         date=memory.get("date"),
         interval=memory.get("interval", DEFAULT_INTERVAL),
         chat_id=chat_id,
+        state=LookingTripState.OFF,
     )
 
     mongo = Mongo(settings=MongoSettings())
-    mongo.put_param(data=params.dict())
-    return await message.answer(f"Параметры поиска сохранены: {params.full_path}")
+    mongo.put_trip(data=params.dict())
+    return await message.answer(f"Параметры поиска сохранены: {params.title}")
 
-
-async def choose_trip_to_start_searching(message: types.Message, **kwargs):
-    chat_id = message.chat.id
-
-    mongo = Mongo(settings=MongoSettings())
-    params = mongo.get_params(chat_id=chat_id)
-    markup = generate_trip_params_inline_markup(params)
-    await message.answer("Доступные маршруты:", reply_markup=markup)
-    await ChooseTripSearch.choose_trip.set()
-
-
-async def handle_chosen_trip(callback: types.CallbackQuery, **kwargs):
-    if not ObjectId.is_valid(callback.data):
-        return await callback.answer(callback.data)
-        # return await callback.answer("Что-то не то. Попробуйте еще раз")
-
-    mongo = Mongo(settings=MongoSettings())
-    param: LookingTripParams = mongo.retrieve_param(param_id=callback.data)
-    if not param or not isinstance(param, LookingTripParams):
-        return await callback.answer("Параметры не найдены")
-
-    new_state: LookingTripState = change_searching_trip_state(param.state)
-    if new_state == LookingTripState.ON:
-        start_searching_trip(callback.message, param)
-        await callback.answer("Поиск запущен")
-    elif new_state == LookingTripState.OFF:
-        stop_trip_searching(param)
-        await callback.answer("Поиск остановлен")
-
-    markup = callback.message.reply_markup
-    change_markup_button_text_by_callback(markup, callback.data, new_state.value)
-    await callback.message.edit_text(callback.message.text, reply_markup=markup)
+    # state = data['state']
+    #
+    # new_state: LookingTripState = change_searching_trip_state(state)
+    # if new_state == LookingTripState.ON:
+    #     # start_searching_trip(callback.message, param)
+    #     await callback.answer("Поиск запущен")
+    # elif new_state == LookingTripState.OFF:
+    #     # stop_trip_searching(param)
+    #     await callback.answer("Поиск остановлен")
+    #
+    # markup = callback.message.reply_markup
+    # change_markup_button_text_by_callback(markup, callback.data, new_state.value)

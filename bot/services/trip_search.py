@@ -1,6 +1,7 @@
 from aiogram import types
 from loguru import logger
 
+from bot import emojies
 from bot.constants import LookingTripState
 from bot.decorators import get_api
 from services.atlas.atlas_api import AtlasAPI
@@ -30,12 +31,26 @@ def stop_trip_searching(param: LookingTripParams):
         scheduler.remove_job(str(param.id))
 
 
-def stop_all_tips_searching():
+async def notify_job_users(jobs, msg: str):
+    users = set()
+    for job in jobs:
+        message = job.kwargs.get('message')
+        if not message or message and message.from_id in users:
+            continue
+        users.add(message.from_id)
+        await message.answer(msg)
+
+
+async def stop_all_tips_searching():
+    await notify_job_users(
+        scheduler.get_jobs(),
+        f"{emojies.EXCLAMATION_MARK} Технические неполадки, все задачи были остановлены {emojies.EXCLAMATION_MARK}"
+    )
     scheduler.remove_all_jobs()
 
 
-def is_job_running(param: LookingTripParams):
-    return LookingTripState.ON if scheduler.get_job(str(param.id)) else LookingTripState.OFF
+# def is_job_running(param: LookingTripParams):
+#     return LookingTripState.ON if scheduler.get_job(str(param.id)) else LookingTripState.OFF
 
 
 def change_searching_trip_state(curr_state: LookingTripState) -> LookingTripState:
