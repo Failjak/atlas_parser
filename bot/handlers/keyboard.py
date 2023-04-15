@@ -99,3 +99,14 @@ def add_back_button_to_markup(markup: InlineKeyboardMarkup, callback_data: str):
     )
     markup.add(btn_back)
     return markup
+
+
+def add_button(markup, name: str, callback_data: str):
+    if not markup or not isinstance(markup, InlineKeyboardMarkup):
+        return markup
+
+    btn = InlineKeyboardButton(
+        name,
+        callback_data=callback_data
+    )
+    markup.add(btn)

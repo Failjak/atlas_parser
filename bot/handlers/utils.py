@@ -3,7 +3,7 @@ from typing import List
 from aiogram import types
 
 from bot.constants import LookingTripState
-from bot.handlers.keyboard import generate_trips_inline_markup, generate_trip_settings_inline_markup
+from bot.handlers.keyboard import generate_trips_inline_markup, generate_trip_settings_inline_markup, add_button
 from services.atlas.dto import LookingTripParams
 from services.mongo.mongo import Mongo
 from services.mongo.settings import MongoSettings
@@ -15,6 +15,9 @@ def generate_choose_trip_info(chat_id: str):  # TODO нет доступных �
 
     text = "Доступные маршруты:"
     markup = generate_trips_inline_markup(params)
+
+    if not markup.inline_keyboard:
+        add_button(markup, 'Нет доступных маршрутов', 'Добавьте маршруты')
 
     return text, markup
 
