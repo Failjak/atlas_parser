@@ -5,7 +5,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils import executor
 from loguru import logger
 
-from bot.handlers.registration import registration_handlers, register_configure_handlers
+from bot.handlers import registration
 from bot.services.trip_search import stop_all_tips_searching
 from bot.settings import bot_settings
 from services.mongo.mongo import Mongo
@@ -13,8 +13,8 @@ from services.mongo.settings import MongoSettings
 
 
 def main(dispatcher: Dispatcher):
-    registration_handlers(dispatcher)
-    register_configure_handlers(dispatcher)
+    registration.register_back_button_handlers(dispatcher)
+    registration.registration_handlers(dispatcher)
 
 
 def run_bot():

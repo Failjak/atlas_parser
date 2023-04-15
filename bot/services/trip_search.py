@@ -10,7 +10,7 @@ from services.atlas.scheduler import scheduler
 
 
 def start_searching_trip(message: types.Message, param: LookingTripParams):
-    logger.debug(f"The trip search {param.id} added to pool")
+    logger.log("BOT", f"The trip search {param.id} added to pool")
 
     scheduler.add_job(
         trip_searching,
@@ -27,7 +27,7 @@ def start_searching_trip(message: types.Message, param: LookingTripParams):
 
 def stop_trip_searching(param: LookingTripParams):
     if scheduler.get_job(str(param.id)):
-        logger.debug(f"The trip search {param.id} has stopped")
+        logger.log("BOT", f"The trip search {param.id} has stopped")
         scheduler.remove_job(str(param.id))
 
 
@@ -59,7 +59,7 @@ def change_searching_trip_state(curr_state: LookingTripState) -> LookingTripStat
 
 @get_api
 async def trip_searching(message: types.Message, api: AtlasAPI, params: LookingTripParams):
-    logger.debug(f"Getting trips to chat_id: {message.chat.id}, by params.id: {params.id}")
+    logger.log("BOT", f"Getting trips to chat_id: {message.chat.id}, by params.id: {params.id}")
     res = await api.get_all_trips(params.departure_city, params.arrival_city, params.date)
-    logger.debug(f"Got a response to chat_id: {message.chat.id}, by params.id: {params.id}")
+    logger.info("BOT", f"Got a response to chat_id: {message.chat.id}, by params.id: {params.id}")
     await message.answer(f"Результат поиска: {res}")
