@@ -9,7 +9,7 @@ from services.mongo.mongo import Mongo
 from services.mongo.settings import MongoSettings
 
 
-def generate_choose_trip_info(chat_id: str):  # TODO нет доступных маршрутов
+def generate_choose_trip_info(chat_id: str):
     mongo = Mongo(settings=MongoSettings())
     params: List[LookingTripParams] = mongo.retrieve_trips_params(chat_id=chat_id)
 
