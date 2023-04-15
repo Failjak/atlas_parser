@@ -1,7 +1,7 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
-class ChooseTripState(StatesGroup):
+class CreateTripState(StatesGroup):
     place_of_departure = State()
     place_of_arrival = State()
     select_date = State()
@@ -15,4 +15,3 @@ class ChooseTripSearchState(StatesGroup):
 
 class TripConfigureState(StatesGroup):
     interval_config_trip = State()
-    state_config_trip = State()
