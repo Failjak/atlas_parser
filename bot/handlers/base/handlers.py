@@ -1,10 +1,10 @@
-from aiogram import types, Dispatcher
+from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 from aiogram_datepicker import Datepicker
 
 from bot.constants import DEFAULT_INTERVAL, LookingTripState
-from bot.handlers.base.states import ChooseTripState
+from bot.handlers.base.states import CreateTripState
 from bot.handlers.keyboard import get_markup
 from bot.settings import _get_datepicker_settings
 from services.atlas.atlas_api import AtlasAPI
@@ -15,13 +15,8 @@ from services.mongo.settings import MongoSettings
 
 
 async def cmd_start(message: types.Message, state: FSMContext):
-    chat_id = message.chat.id
-    dispatcher = Dispatcher.get_current()
-
-    data = await dispatcher.storage.get_data(chat=chat_id)
-    if data.get("interval") is None:
-        await state.finish()
-        await dispatcher.storage.set_data(chat=chat_id, data={"interval": DEFAULT_INTERVAL})
+    await state.finish()
+    await state.set_data({"interval": DEFAULT_INTERVAL})
 
     markup = get_markup()
     await message.answer("Atlas Schedule Menu:", reply_markup=markup)
@@ -33,19 +28,19 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
 
 async def start_trip_adding(message: types.Message):
-    await ChooseTripState.place_of_departure.set()
+    await CreateTripState.place_of_departure.set()
     await message.answer("Место отправления:")
 
 
 async def set_departure_place(message: types.Message, state: FSMContext, **kwargs):
     await state.update_data(departure_place=message.text)
-    await ChooseTripState.place_of_arrival.set()
+    await CreateTripState.place_of_arrival.set()
     await message.answer(f"Место назначения:")
 
 
 async def set_arrival_place(message: types.Message, state: FSMContext, **kwargs):
     await state.update_data(arrival_place=message.text)
-    await ChooseTripState.select_date.set()
+    await CreateTripState.select_date.set()
 
     datepicker = Datepicker(_get_datepicker_settings())
     markup = datepicker.start_calendar()
@@ -58,16 +53,14 @@ async def _process_datepicker(callback_query: types.CallbackQuery, callback_data
     date = await datepicker.process(callback_query, callback_data)
     if date:
         await state.update_data(date=date)
-        await _save_params(callback_query.message)
+        await _save_params(callback_query.message, state)
     else:
         await callback_query.answer()
 
 
-async def _save_params(message: types.Message):
+async def _save_params(message: types.Message, state: FSMContext):
     chat_id = message.chat.id
-
-    dispatcher = Dispatcher.get_current()
-    memory = await dispatcher.storage.get_data(chat=chat_id)
+    memory = await state.get_data()
 
     api = AtlasAPI()
     try:
@@ -88,16 +81,3 @@ async def _save_params(message: types.Message):
     mongo = Mongo(settings=MongoSettings())
     mongo.put_trip(data=params.dict())
     return await message.answer(f"Параметры поиска сохранены: {params.title}")
-
-    # state = data['state']
-    #
-    # new_state: LookingTripState = change_searching_trip_state(state)
-    # if new_state == LookingTripState.ON:
-    #     # start_searching_trip(callback.message, param)
-    #     await callback.answer("Поиск запущен")
-    # elif new_state == LookingTripState.OFF:
-    #     # stop_trip_searching(param)
-    #     await callback.answer("Поиск остановлен")
-    #
-    # markup = callback.message.reply_markup
-    # change_markup_button_text_by_callback(markup, callback.data, new_state.value)
